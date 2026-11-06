@@ -1,0 +1,12 @@
+geopandas>=1.0
+shapely>=2.1
+pandas>=2.2
+numpy
+pyyaml
+scikit-learn>=1.4
+xgboost>=2.0
+matplotlib
+joblib
+torch
+earthengine-api
+pytest

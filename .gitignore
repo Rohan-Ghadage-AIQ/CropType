@@ -1,0 +1,41 @@
+# --- Data (large, and contains survey photos/surveyor names) ---
+data/**
+!data/raw/
+!data/raw/.gitkeep
+*.zip
+*.shp
+*.shx
+*.dbf
+*.prj
+*.cpg
+*.gpkg
+*.npz
+
+# --- Generated results (recreate with: python run.py) ---
+outputs/
+*.joblib
+*.log
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+env/
+.ipynb_checkpoints/
+
+# --- Secrets / local settings ---
+.env
+*.json.key
+credentials*.json
+
+# --- Editors / OS ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini

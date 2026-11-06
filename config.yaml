@@ -1,0 +1,65 @@
+# Crop-type classification config. All paths are relative to the project root.
+
+data:
+  shapefile: data/raw/farm_boundaries_FINAL_Squares_27Oct_updated.shp
+  # The labels span several seasons; imagery must match the season the crop was
+  # observed in. Rabi 2022-23 holds ~89% of the fields, so it is the default.
+  season: "Rabi 2022-23"
+  # Classes with fewer training fields than this are merged into "Other"
+  # (or dropped, see other_policy).
+  min_class_count: 30
+  other_policy: group          # group | drop
+  exclude_crops: ["Home", "Fallow Land", "Other Crop", "Vegetables"]  # non-crop / ambiguous labels
+  only_train_ok: true          # drop fields the QC step flagged (train_ok == False)
+  only_mono: true              # drop intercrop fields
+
+# Time window and composite step for the season above. Starting in September
+# captures the preceding kharif crop and land preparation; 10-day steps catch
+# sowing-date differences (e.g. gram vs wheat) that 15-day steps blur.
+season_window:
+  start: "2022-09-01"
+  end: "2023-04-30"
+  step_days: 10
+
+sampling:
+  # Approach 1 - polygon: shrink the field by an inner buffer (drops mixed
+  # edge pixels), then take the largest square that fits inside it.
+  polygon_inner_buffer_m: 10
+  polygon_mode: inner          # inner (whole buffered polygon, ~17 px) | square (~5 px)
+  min_square_half_m: 5         # below this the square holds < 1 pixel -> fall back to inner polygon
+  # Approach 2 - point: square buffer around the ground-truth GPS point.
+  point_square_half_m: 15      # 30 m x 30 m = 3x3 Sentinel-2 pixels
+  point_clip_to_polygon: true  # keep the point square inside its farm polygon
+
+gee:
+  project: job-portal-464909   # <-- put your Google Cloud project id here
+  scale: 10
+  chunk_size: 150              # fields per request (lower it if GEE times out)
+  workers: 6                   # parallel Earth Engine requests
+  cloud_score_threshold: 0.60  # Cloud Score+ cs_cdf; higher = stricter
+  s1_orbit_pass: DESCENDING    # DESCENDING | ASCENDING | BOTH
+
+model:
+  random_state: 42
+  # Use the 'split' column that ships with the shapefile (train/test, field-level).
+  use_given_split: true
+  test_size: 0.25              # only used when use_given_split is false
+  spatial_cv: false            # true = extra check on unseen villages (adds ~10 min)
+  xgb:
+    n_estimators: 800
+    max_depth: 6
+    learning_rate: 0.05
+    subsample: 0.8
+    colsample_bytree: 0.4
+  rf:
+    n_estimators: 500
+    min_samples_leaf: 2
+
+pixel:
+  max_pixels_per_field: 64     # cap so a few big fields don't dominate training
+  tempcnn_epochs: 40           # stops early when validation stops improving
+
+paths:
+  interim: data/interim
+  features: data/features
+  outputs: outputs
